@@ -47,7 +47,7 @@
       ws.innerText = latency.toFixed(1);
       wsLatencies.push(latency);
 
-      const rolling = wsLatencies.slice(wsLatencies.length - 10).reduce((acc, cur) => acc + cur, 0) / wsLatencies.length;
+      const rolling = wsLatencies.slice(wsLatencies.length - 10).reduce((acc, cur) => acc + cur, 0) / Math.min(wsLatencies.length, 10);
       wsRolling.innerText = rolling.toFixed(1);
     }
 
@@ -56,7 +56,7 @@
       http.innerText = latency.toFixed(1);
       httpLatencies.push(latency);
 
-      const rolling = httpLatencies.slice(httpLatencies.length - 10).reduce((acc, cur) => acc + cur, 0) / httpLatencies.length;
+      const rolling = httpLatencies.slice(httpLatencies.length - 10).reduce((acc, cur) => acc + cur, 0) / Math.min(httpLatencies.length, 10);
       httpRolling.innerText = rolling.toFixed(1);
     }
 
@@ -69,7 +69,7 @@
         timeDiffs.unshift();
       }
 
-      const rolling = timeDiffs.slice(wsLatencies.length - 10).reduce((acc, cur) => acc + cur, 0) / timeDiffs.length;
+      const rolling = timeDiffs.slice(wsLatencies.length - 10).reduce((acc, cur) => acc + cur, 0) / Math.min(timeDiffs.length, 10);
       timeRolling.innerText = rolling.toFixed(1);
     }
 
