@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latency test</title>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/uplot@1.6.13/dist/uPlot.cjs.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/uplot@1.6.13/dist/uPlot.min.css">
+
+</head>
+
+<body>
+  <h1>Latency test</h1>
+
+  <p><strong>Direct latency:</strong> <span id="direct">--</span> ms (<span id="direct-rolling">--</span> ms rolling)
+  </p>
+  <p><strong>Time diff:</strong> <span id="time">--</span> ms (<span id="time-rolling">--</span> ms rolling)</p>
+
+  <div id="plot"></div>
+
+  <script async>
+    const socket = io();
+    const plot = new uPlot({
+      width: 800,
+      height: 600,
+      axes: [{}, { scale: "ms" }],
+      series: [{}, { label: "ping-pong", stroke: "blue", scale: "ms" }, { scale: "time diff", stroke: "green", scale: "ms" }],
+    }, [], document.getElementById("plot"));
+
+    const plotData = [[], [], []];
+
+    const direct = document.getElementById("direct");
+    const directRolling = document.getElementById("direct-rolling");
+
+    const time = document.getElementById("time");
+    const timeRolling = document.getElementById("time-rolling");
+
+    const latencies = [];
+    const addLatency = (latency) => {
+      console.log("Latency:", latency, "ms");
+      direct.innerText = latency.toFixed(1);
+      latencies.push(latency);
+
+      const rolling = latencies.slice(latencies.length - 10).reduce((acc, cur) => acc + cur, 0) / latencies.length;
+      directRolling.innerText = rolling.toFixed(1);
+    }
+
+    const timeDiffs = [];
+    const addTime = (timeDiff) => {
+      console.log("Time diff:", timeDiff, "ms");
+      time.innerText = timeDiff.toFixed(1);
+      timeDiffs.push(timeDiff);
+
+      if (timeDiffs.length > 10) {
+        timeDiffs.unshift();
+      }
+
+      const rolling = timeDiffs.slice(latencies.length - 10).reduce((acc, cur) => acc + cur, 0) / timeDiffs.length;
+      timeRolling.innerText = rolling.toFixed(1);
+    }
+
+    setInterval(() => {
+      const start = Date.now();
+      socket.volatile.emit("time", start, (timeDiff) => {
+        addTime(timeDiff);
+        const latency = Date.now() - start;
+        addLatency(latency);
+        plotData[0].push(Date.now() / 1000);
+        plotData[1].push(latency);
+        plotData[2].push(timeDiff);
+        plot.setData(plotData);
+        console.log(plotData);
+      })
+    }, 250);
+
+    socket.on("pong", (latency) => addLatency(latency));
+
+  </script>
+</body>
+
+</html>
